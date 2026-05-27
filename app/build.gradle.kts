@@ -82,7 +82,7 @@ dependencies {
     implementation("io.ktor:ktor-client-android:2.3.11") // O la versión que use tu proyecto
 
     implementation("com.github.franmontiel:PersistentCookieJar:v1.0.1")
-
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
 
     // Tests

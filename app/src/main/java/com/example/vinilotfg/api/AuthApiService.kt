@@ -13,4 +13,7 @@ interface AuthApiService {
 
     @POST("/api/auth/login") // La ruta que tu compañero tenga para el login
     suspend fun loginUsuario(@Body request: LoginRequest): Response<LoginResponse>
+
+    @POST("api/auth/logout")
+    suspend fun logout(): Response<Map<String, String>>
 }
