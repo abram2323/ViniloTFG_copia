@@ -1,6 +1,8 @@
 package com.example.vinilotfg
 
 import DetailScreen
+import DireccionesScreen
+
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -30,18 +32,21 @@ import androidx.navigation.compose.rememberNavController
 import com.example.vinilotfg.api.RetrofitClient
 import com.example.vinilotfg.ui.screens.CartScreen
 import com.example.vinilotfg.ui.screens.ClientesScreen
+
+import com.example.vinilotfg.ui.screens.MisPedidosScreen
 import com.example.vinilotfg.ui.screens.Registro
 import com.example.vinilotfg.ui.screens.StoreScreen
 import com.example.vinilotfg.ui.theme.*
 import com.example.vinilotfg.viewmodel.VinylViewModel
 import kotlinx.coroutines.launch
+import com.example.vinilotfg.ui.screens.PaymentScreen
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
-        RetrofitClient.init(this)
+
         RetrofitClient.init(applicationContext)
 
         enableEdgeToEdge()
@@ -64,7 +69,9 @@ class MainActivity : ComponentActivity() {
 
                     composable("register") { Registro(navController) }
 
-
+                    composable("mis_pedidos") {
+                        MisPedidosScreen(vinylViewModel, navController)
+                    }
 
                     composable("store/{username}") { backStackEntry ->
 
@@ -94,7 +101,7 @@ class MainActivity : ComponentActivity() {
 
 
 
-// Pasamos el 'producto' encontrado a la pantalla
+                        // Pasamos el 'producto' encontrado a la pantalla
 
                         if (producto != null) {
 
@@ -104,7 +111,9 @@ class MainActivity : ComponentActivity() {
 
                     }
 
-
+                    composable("direcciones") {
+                        DireccionesScreen(vinylViewModel, navController)
+                    }
 
                     composable("perfil") {
                         ClientesScreen(navController, vinylViewModel)
@@ -112,12 +121,16 @@ class MainActivity : ComponentActivity() {
 
 
 
-// Dentro de tu NavHost en MainActivity.kt
+                    // Dentro de tu NavHost en MainActivity.kt
 
                     composable("carrito") {
 
                         CartScreen(vinylViewModel, navController)
 
+                    }
+
+                    composable("payment_screen") {
+                        PaymentScreen(navController, vinylViewModel)
                     }
 
                 }

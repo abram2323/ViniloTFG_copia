@@ -11,8 +11,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.example.vinilotfg.model.Carrito
 import com.example.vinilotfg.model.CarritoRequest
+import com.example.vinilotfg.model.Direccion
+import com.example.vinilotfg.model.Pedido
+import com.example.vinilotfg.model.PedidoRequest
 import com.example.vinilotfg.model.Usuario
 import retrofit2.Response
+import com.google.gson.Gson
+import kotlinx.coroutines.flow.StateFlow
+
 class VinylViewModel : ViewModel() {
 
     private val _vinyls = MutableStateFlow<List<Producto>>(emptyList())
@@ -25,6 +31,12 @@ class VinylViewModel : ViewModel() {
     // Estado para almacenar el usuario actual
     private val _usuarioPerfil = MutableStateFlow<Usuario?>(null)
     val usuarioPerfil = _usuarioPerfil.asStateFlow()
+
+    private val _pedidos = MutableStateFlow<List<Pedido>>(emptyList())
+    val pedidos: StateFlow<List<Pedido>> = _pedidos
+
+    private val _direcciones = MutableStateFlow<List<Direccion>>(emptyList())
+    val direcciones: StateFlow<List<Direccion>> = _direcciones
 
     var currentUserId: String? = null
 
@@ -173,6 +185,23 @@ class VinylViewModel : ViewModel() {
         }
     }
 
+    fun limpiarCarritoEnServidor() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.carritoApi.vaciarCarrito()
+                if (response.isSuccessful) {
+                    // Si el servidor confirma que se vació, limpiamos la lista localmente
+                    _carritoItems.value = emptyList()
+                    android.util.Log.d("DEBUG_CARRITO", "Carrito vaciado en servidor y local")
+                } else {
+                    android.util.Log.e("DEBUG_CARRITO", "Error al vaciar en servidor: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("DEBUG_CARRITO", "Error de conexión: ${e.message}")
+            }
+        }
+    }
+
     fun eliminarProducto(itemId: String?) {
         if (itemId == null) return
 
@@ -192,4 +221,88 @@ class VinylViewModel : ViewModel() {
         }
     }
     //-------------------------------------------------------------------------------------------------
+
+    //Funciones de Pedidos
+    fun crearPedido(
+        total: Double,
+        subtotal: Double,
+        envio: Double,
+        descuento: Double,
+        metodoEnvio: String,
+        direccion: String,
+        tarjetaLast4: String,
+        listaCarrito: List<Carrito>,
+        onSuccess: () -> Unit
+    ) {
+        val itemsParaEnvio = listaCarrito.map { mapOf("id" to it.productoId, "cantidad" to it.cantidad) }
+        val itemsJsonString = Gson().toJson(itemsParaEnvio)
+
+        // 2. Creamos el objeto puente
+        val pedidoRequest = PedidoRequest(
+            total = total,
+            subtotal = subtotal,
+            envio = envio,
+            descuento = descuento,
+            metodoEnvio = metodoEnvio,
+            direccion = direccion,
+            tarjetaLast4 = tarjetaLast4,
+            items = itemsJsonString,
+        )
+
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.pedidoApi.crearPedido(pedidoRequest)
+                if (response.isSuccessful) {
+                    android.util.Log.d("DEBUG_PEDIDO", "¡Pedido exitoso!")
+                    onSuccess() // <--- Llamamos a la navegación aquí
+                } else {
+                    // Manejo de error
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("DEBUG_PEDIDO", "Error: ${e.message}")
+            }
+        }
+    }
+
+    // Usamos el mismo nombre que en el PedidoApiService
+    fun obtenerPedidos() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.pedidoApi.obtenerPedidos()
+                if (response.isSuccessful) {
+                    // Actualizamos el estado con la lista recibida
+                    _pedidos.value = response.body() ?: emptyList()
+                    android.util.Log.d("DEBUG_PEDIDOS", "Pedidos cargados: ${_pedidos.value.size}")
+                } else {
+                    android.util.Log.e("DEBUG_PEDIDOS", "Error: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("DEBUG_PEDIDOS", "Excepción: ${e.message}")
+            }
+        }
+    }
+
+    //Funciones para direcciones
+    fun obtenerDirecciones() {
+        val userId = _usuarioPerfil.value?.id
+        if (userId == null) {
+            android.util.Log.e("DEBUG_DIRECCIONES", "Error: userId es null. ¿Has hecho login?")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.direccionApi.obtenerDirecciones(userId)
+                if (response.isSuccessful) {
+                    val cuerpo = response.body()
+                    android.util.Log.d("DEBUG_DIRECCIONES", "Cuerpo recibido: $cuerpo") // <--- MIRA ESTO
+                    _direcciones.value = cuerpo ?: emptyList()
+                } else {
+                    android.util.Log.e("DEBUG_DIRECCIONES", "Error API: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("DEBUG_DIRECCIONES", "Excepción: ${e.message}")
+            }
+        }
+    }
 }

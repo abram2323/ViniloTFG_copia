@@ -22,6 +22,8 @@ interface CarritoApiService {
         @Body body: Map<String, Int> // Cambiado de 'Any' a 'Int'
     ): Response<Map<String, String>>
 
+    @DELETE("/api/carrito") // Asegúrate de que esta sea la ruta correcta
+    suspend fun vaciarCarrito(): Response<Map<String, Any>>
     @DELETE("api/carrito/{itemId}")
     suspend fun eliminarItem(@Path("itemId") itemId: String): Response<Map<String, String>>
 }

@@ -17,16 +17,17 @@ object RetrofitClient {
         cookieJar = PersistentCookieJar(SetCookieCache(), SharedPrefsCookiePersistor(context))
     }
 
-    private val client: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .cookieJar(cookieJar ?: throw IllegalStateException("RetrofitClient no inicializado. Llama a init(context)"))
+    private fun getClient(): OkHttpClient {
+        val jar = cookieJar ?: throw IllegalStateException("RetrofitClient no inicializado")
+        return OkHttpClient.Builder()
+            .cookieJar(jar)
             .build()
     }
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(client) // Aquí es donde "enchufamos" las cookies
+            .client(getClient()) // Ahora llamamos a la función que recupera el jar
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
@@ -44,4 +45,8 @@ object RetrofitClient {
     val productoApi: ProductoApiService by lazy { retrofit.create(ProductoApiService::class.java) }
     val authApi: AuthApiService by lazy { retrofit.create(AuthApiService::class.java) }
     val carritoApi: CarritoApiService by lazy { retrofit.create(CarritoApiService::class.java) }
+    val pedidoApi: PedidoApiService by lazy { retrofit.create(PedidoApiService::class.java) }
+    val direccionApi: DireccionApiService by lazy {
+        retrofit.create(DireccionApiService::class.java)
+    }
 }

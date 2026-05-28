@@ -146,7 +146,7 @@ fun StoreScreen(
                 if (!username.isNullOrEmpty()) {
 
                     Text(
-                        text = "Bienvenido, ${usuario?.nombre ?: "Invitado"}",
+                        text = "Bienvenido, ${usuario?.nombre }",
                         style = MaterialTheme.typography.headlineSmall,
                         color = Color.White,
                         modifier = Modifier.padding(bottom = 16.dp)

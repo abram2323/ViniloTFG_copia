@@ -24,8 +24,15 @@ fun AppFooter(navController: NavController) { // Usamos NavController directamen
                 Icon(Icons.Default.Home, contentDescription = "Home")
             }
 
-            IconButton(onClick = { /* Buscar */ }, modifier = Modifier.offset(y = 10.dp)) {
-                Icon(Icons.Default.Search, contentDescription = "Buscar")
+            IconButton(
+                onClick = { /* Navegar a la pantalla de mis pedidos */
+                    navController.navigate("mis_pedidos")},
+                modifier = Modifier.offset(y = 10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ShoppingBag,
+                    contentDescription = "Mis pedidos"
+                )
             }
 
             IconButton(onClick = { navController.navigate("carrito") }, modifier = Modifier.offset(y = 10.dp)) {

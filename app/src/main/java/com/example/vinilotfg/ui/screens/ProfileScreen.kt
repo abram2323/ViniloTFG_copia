@@ -84,9 +84,10 @@ fun ClientesScreen(navController: NavController, viewModel: VinylViewModel) {
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OptionRow(Icons.Default.PersonOutline, "Editar perfil")
-                OptionRow(Icons.Default.FavoriteBorder, "Mis pedidos")
                 OptionRow(Icons.Default.QueueMusic, "Devoluciones")
-                OptionRow(Icons.Default.WorkspacePremium, "Direcciones")
+                OptionRow(Icons.Default.WorkspacePremium, "Direcciones") {
+                    navController.navigate("direcciones") // Asegúrate de que esta ruta coincida con tu NavHost
+                }
 
                 // CERRAR SESIÓN CON ACCIÓN
                 OptionRow(Icons.Default.Settings, "Cerrar sesión") {
