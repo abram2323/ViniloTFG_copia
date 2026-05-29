@@ -11,6 +11,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -105,6 +109,7 @@ fun InicioScreen(navController: NavController, vinylViewModel: VinylViewModel) {
     var password by remember { mutableStateOf("") }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var passwordVisible by remember { mutableStateOf(false) }
 
     val fondo = Brush.linearGradient(
         colors = listOf(Color(0xFF4B1173), Color(0xFF1A002D)),
@@ -174,7 +179,19 @@ fun InicioScreen(navController: NavController, vinylViewModel: VinylViewModel) {
                     onValueChange = { password = it },
                     placeholder = { Text("Contraseña") },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    // 2. Cambia la transformación según el estado
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    // 3. Añade el icono al final del campo
+                    trailingIcon = {
+                        val image = if (passwordVisible)
+                            Icons.Filled.Visibility // Necesitas importar esto
+                        else
+                            Icons.Filled.VisibilityOff // Necesitas importar esto
+
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(imageVector = image, contentDescription = if (passwordVisible) "Ocultar contraseña" else "Ver contraseña")
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
