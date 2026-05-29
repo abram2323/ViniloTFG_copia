@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import com.example.vinilotfg.model.Carrito
 import com.example.vinilotfg.model.CarritoRequest
 import com.example.vinilotfg.model.Direccion
+import com.example.vinilotfg.model.DireccionRequest
 import com.example.vinilotfg.model.Pedido
 import com.example.vinilotfg.model.PedidoRequest
 import com.example.vinilotfg.model.Usuario
@@ -25,18 +26,8 @@ class VinylViewModel : ViewModel() {
     val vinyls = _vinyls.asStateFlow()
 
     // --- CAMBIO AQUÍ: Ahora es List<CarritoItem> ---
-    private val _carritoItems = MutableStateFlow<List<Carrito>>(emptyList())
-    val carritoItems = _carritoItems.asStateFlow()
 
     // Estado para almacenar el usuario actual
-    private val _usuarioPerfil = MutableStateFlow<Usuario?>(null)
-    val usuarioPerfil = _usuarioPerfil.asStateFlow()
-
-    private val _pedidos = MutableStateFlow<List<Pedido>>(emptyList())
-    val pedidos: StateFlow<List<Pedido>> = _pedidos
-
-    private val _direcciones = MutableStateFlow<List<Direccion>>(emptyList())
-    val direcciones: StateFlow<List<Direccion>> = _direcciones
 
     var currentUserId: String? = null
 
@@ -58,6 +49,10 @@ class VinylViewModel : ViewModel() {
     }
 
     //Funciones para Usuario
+
+    private val _usuarioPerfil = MutableStateFlow<Usuario?>(null)
+    val usuarioPerfil = _usuarioPerfil.asStateFlow()
+
     fun realizarLogin(email: String, pass: String, onResult: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
@@ -81,7 +76,7 @@ class VinylViewModel : ViewModel() {
         }
     }
 
-    // Función para llamar a la API
+    // Función para Usuario
     fun obtenerPerfil() {
         viewModelScope.launch {
             try {
@@ -130,6 +125,9 @@ class VinylViewModel : ViewModel() {
     //----------------------------------------------------------------------------------------------
 
     //Funciones del Carrrito
+
+    private val _carritoItems = MutableStateFlow<List<Carrito>>(emptyList())
+    val carritoItems = _carritoItems.asStateFlow()
     fun agregarAlCarrito(productoId: String) {
         viewModelScope.launch {
             try {
@@ -223,6 +221,9 @@ class VinylViewModel : ViewModel() {
     //-------------------------------------------------------------------------------------------------
 
     //Funciones de Pedidos
+    private val _pedidos = MutableStateFlow<List<Pedido>>(emptyList())
+    val pedidos: StateFlow<List<Pedido>> = _pedidos
+
     fun crearPedido(
         total: Double,
         subtotal: Double,
@@ -283,26 +284,24 @@ class VinylViewModel : ViewModel() {
     }
 
     //Funciones para direcciones
+    private val _direcciones = MutableStateFlow<List<Direccion>>(emptyList())
+    val direcciones: StateFlow<List<Direccion>> = _direcciones
+
     fun obtenerDirecciones() {
         val userId = _usuarioPerfil.value?.id
-        if (userId == null) {
-            android.util.Log.e("DEBUG_DIRECCIONES", "Error: userId es null. ¿Has hecho login?")
-            return
-        }
+        if (userId == null) return
 
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.direccionApi.obtenerDirecciones(userId)
-                if (response.isSuccessful) {
-                    val cuerpo = response.body()
-                    android.util.Log.d("DEBUG_DIRECCIONES", "Cuerpo recibido: $cuerpo") // <--- MIRA ESTO
-                    _direcciones.value = cuerpo ?: emptyList()
-                } else {
-                    android.util.Log.e("DEBUG_DIRECCIONES", "Error API: ${response.code()}")
-                }
+                // Nota: getDirecciones devuelve directamente List<Direccion>,
+                // no necesitas convertir mapas si ya definiste el modelo en la interfaz.
+                val lista = RetrofitClient.direccionApi.getDirecciones(userId)
+                _direcciones.value = lista
             } catch (e: Exception) {
-                android.util.Log.e("DEBUG_DIRECCIONES", "Excepción: ${e.message}")
+                android.util.Log.e("DEBUG_DIRECCIONES", "Error: ${e.message}")
             }
         }
     }
+
+
 }

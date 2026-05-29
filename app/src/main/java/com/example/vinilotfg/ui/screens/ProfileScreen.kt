@@ -2,13 +2,14 @@ package com.example.vinilotfg.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,34 +23,23 @@ import androidx.navigation.NavController
 import com.example.vinilotfg.ui.AppFooter
 import com.example.vinilotfg.ui.AppHeader
 import com.example.vinilotfg.viewmodel.VinylViewModel
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import com.example.vinilotfg.model.Usuario
-import androidx.compose.foundation.clickable
-import androidx.compose.runtime.LaunchedEffect
+
 /**
  * Pantalla de perfil del cliente.
  * Muestra la información del usuario, su estado premium y opciones de configuración.
- *
- * @param navController Controlador de navegación para redirigir a otras secciones desde el footer.
  */
 @Composable
 fun ClientesScreen(navController: NavController, viewModel: VinylViewModel) {
     // Observamos los datos reales del usuario desde el ViewModel
     val usuario by viewModel.usuarioPerfil.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.obtenerPerfil() // Ya no pases parámetros
-    }
-
     val fondoOscuro = Color(0xFF120338)
     val degradadoAvatar = Brush.linearGradient(
         colors = listOf(Color(0xFFE91E63), Color(0xFF9C27B0))
     )
 
-    // ESTO ES LO QUE FALTA PARA DISPARAR LA CARGA
+    // Carga inicial del perfil
     LaunchedEffect(Unit) {
-        // Necesitamos el ID. Si lo guardaste en el ViewModel tras el login, úsalo:
         val userId = viewModel.currentUserId
         if (userId != null) {
             viewModel.obtenerPerfil()
@@ -62,37 +52,53 @@ fun ClientesScreen(navController: NavController, viewModel: VinylViewModel) {
         containerColor = fondoOscuro
     ) { paddingValues ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 20.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(30.dp))
 
-            // Avatar... (igual que antes)
-            Box(modifier = Modifier.size(100.dp).clip(CircleShape).background(degradadoAvatar), contentAlignment = Alignment.Center) {
+            // Avatar
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .background(degradadoAvatar),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(Icons.Default.Person, "Avatar", Modifier.size(60.dp), Color.White)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // INFORMACIÓN DINÁMICA
-            Text(usuario?.nombre ?: "Cargando...", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text(usuario?.email ?: "", color = Color.LightGray, fontSize = 14.sp)
-
-            // ... (Badge Premium igual que antes)
+            // Información dinámica
+            Text(
+                usuario?.nombre ?: "Cargando...",
+                color = Color.White,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                usuario?.email ?: "",
+                color = Color.LightGray,
+                fontSize = 14.sp
+            )
 
             Spacer(modifier = Modifier.height(30.dp))
 
+            // Opciones de configuración
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OptionRow(Icons.Default.PersonOutline, "Editar perfil")
                 OptionRow(Icons.Default.QueueMusic, "Devoluciones")
                 OptionRow(Icons.Default.WorkspacePremium, "Direcciones") {
-                    navController.navigate("direcciones") // Asegúrate de que esta ruta coincida con tu NavHost
+                    navController.navigate("direcciones")
                 }
 
-                // CERRAR SESIÓN CON ACCIÓN
+                // Cerrar sesión
                 OptionRow(Icons.Default.Settings, "Cerrar sesión") {
-                    viewModel.cerrarSesion { exito ->
-                        // Solo navegamos si la petición de logout terminó (exito o error)
+                    viewModel.cerrarSesion {
                         navController.navigate("inicio") {
                             popUpTo(0) { inclusive = true }
                         }
@@ -103,21 +109,42 @@ fun ClientesScreen(navController: NavController, viewModel: VinylViewModel) {
     }
 }
 
-// ACTUALIZACIÓN DE OptionRow para permitir clics
 @Composable
-fun OptionRow(icon: ImageVector, title: String, iconColor: Color = Color.White, onClick: () -> Unit = {}) {
+fun OptionRow(
+    icon: ImageVector,
+    title: String,
+    iconColor: Color = Color.White,
+    onClick: () -> Unit = {}
+) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() }, // <--- AÑADIDO ESTO
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1E0B4F)),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, Color(0xFF311B92))
     ) {
-        Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(40.dp).background(Color(0xFF120338), RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(Color(0xFF120338), RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(icon, null, tint = iconColor)
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Text(title, color = Color.White, modifier = Modifier.weight(1f), fontSize = 16.sp)
+            Text(
+                title,
+                color = Color.White,
+                modifier = Modifier.weight(1f),
+                fontSize = 16.sp
+            )
             Icon(Icons.Default.ChevronRight, null, tint = Color.Gray)
         }
     }

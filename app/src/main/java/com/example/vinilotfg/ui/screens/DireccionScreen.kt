@@ -14,17 +14,14 @@ import com.example.vinilotfg.viewmodel.VinylViewModel
 
 @Composable
 fun DireccionesScreen(viewModel: VinylViewModel, navController: NavController) { // Añadido navController
+    LaunchedEffect(Unit) { // 'Unit' garantiza que solo se lanza al entrar
+        android.util.Log.d("DEBUG_DIRECCIONES", "Llamando a obtenerDirecciones...")
+        viewModel.obtenerDirecciones()
+    }
     val direcciones by viewModel.direcciones.collectAsState()
     val fondoOscuro = Color(0xFF120338)
 
-    LaunchedEffect(Unit) {
-        viewModel.obtenerDirecciones()
-    }
 
-    LaunchedEffect(Unit) {
-        android.util.Log.d("DEBUG_DIRECCIONES", "Entrando en la pantalla, llamando a obtenerDirecciones")
-        viewModel.obtenerDirecciones()
-    }
     Scaffold(
         topBar = { AppHeader(title = "Vinyl Sounds") },
         bottomBar = { AppFooter(navController) }

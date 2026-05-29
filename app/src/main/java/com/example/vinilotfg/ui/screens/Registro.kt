@@ -44,32 +44,87 @@ fun Registro(navController: NavController) {
         colors = listOf(Color(0xFFB13CFF), Color(0xFFFF2D6F))
     )
 
-    Box(modifier = Modifier.fillMaxSize().background(fondo), contentAlignment = Alignment.TopCenter) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(fondo),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Spacer(modifier = Modifier.height(48.dp))
-            // Asegúrate de tener LogoTextStyle definido o cámbialo por un estilo estándar
+
             Text("🎵 Vinyl Sounds", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Text("Crea tu cuenta", fontSize = 14.sp, color = Color(0xFFC9B4E3))
+
             Spacer(modifier = Modifier.height(36.dp))
 
             Column(
-                modifier = Modifier.fillMaxWidth().background(Color(0xFF221137), RoundedCornerShape(30.dp)).padding(24.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF221137), RoundedCornerShape(30.dp))
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("Registro", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Spacer(modifier = Modifier.height(18.dp))
 
                 // Fila Nombre/Apellido
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(value = nombre, onValueChange = { nombre = it }, placeholder = { Text("Nombre") }, modifier = Modifier.weight(1f), colors = registroTextFieldColors())
-                    OutlinedTextField(value = apellido, onValueChange = { apellido = it }, placeholder = { Text("Apellido") }, modifier = Modifier.weight(1f), colors = registroTextFieldColors())
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = nombre,
+                        onValueChange = { nombre = it },
+                        placeholder = { Text("Nombre") },
+                        modifier = Modifier.weight(1f),
+                        colors = registroTextFieldColors()
+                    )
+                    OutlinedTextField(
+                        value = apellido,
+                        onValueChange = { apellido = it },
+                        placeholder = { Text("Apellido") },
+                        modifier = Modifier.weight(1f),
+                        colors = registroTextFieldColors()
+                    )
                 }
+
                 Spacer(modifier = Modifier.height(14.dp))
-                OutlinedTextField(value = email, onValueChange = { email = it }, placeholder = { Text("Correo electrónico") }, modifier = Modifier.fillMaxWidth(), colors = registroTextFieldColors())
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = { Text("Correo electrónico") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = registroTextFieldColors()
+                )
+
                 Spacer(modifier = Modifier.height(14.dp))
-                OutlinedTextField(value = password, onValueChange = { password = it }, placeholder = { Text("Contraseña") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), colors = registroTextFieldColors())
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    placeholder = { Text("Contraseña") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = registroTextFieldColors()
+                )
+
                 Spacer(modifier = Modifier.height(14.dp))
-                OutlinedTextField(value = repeatPassword, onValueChange = { repeatPassword = it }, placeholder = { Text("Repite la contraseña") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), colors = registroTextFieldColors())
+
+                OutlinedTextField(
+                    value = repeatPassword,
+                    onValueChange = { repeatPassword = it },
+                    placeholder = { Text("Repite la contraseña") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = registroTextFieldColors()
+                )
 
                 if (errorMessage.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -79,7 +134,12 @@ fun Registro(navController: NavController) {
                 Spacer(modifier = Modifier.height(22.dp))
 
                 // Botón con gradiente
-                Box(modifier = Modifier.fillMaxWidth().height(56.dp).background(botonGradiente, RoundedCornerShape(20.dp))) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .background(botonGradiente, RoundedCornerShape(20.dp))
+                ) {
                     Button(
                         onClick = {
                             if (password != repeatPassword) {
@@ -87,7 +147,6 @@ fun Registro(navController: NavController) {
                             } else {
                                 coroutineScope.launch(Dispatchers.IO) {
                                     try {
-                                        // Preparamos la petición que el servidor de tu compañero espera
                                         val request = RegistroRequest(
                                             email = email,
                                             password = password,
@@ -95,17 +154,14 @@ fun Registro(navController: NavController) {
                                             apellidos = apellido
                                         )
 
-                                        // LLAMADA AL NUEVO SERVICIO AUTH
                                         val response = RetrofitClient.authApi.registrarUsuario(request)
 
                                         withContext(Dispatchers.Main) {
                                             if (response.isSuccessful) {
-                                                // Si todo fue bien, navegamos a la tienda
                                                 navController.navigate("store/$email") {
                                                     popUpTo("inicio") { inclusive = true }
                                                 }
                                             } else {
-                                                // Capturamos el error específico
                                                 val errorBody = response.errorBody()?.string()
                                                 errorMessage = "Error ${response.code()}: ${errorBody ?: "No se pudo registrar"}"
                                             }
