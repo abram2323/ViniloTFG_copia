@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +26,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.vinilotfg.model.Producto
 import com.example.vinilotfg.ui.AppFooter
+import com.example.vinilotfg.ui.AppHeader
 import com.example.vinilotfg.viewmodel.VinylViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,29 +38,18 @@ fun DetailScreen(
 ) {
     Log.d("DEBUG_DETAIL", "Recibiendo vinilo: ${producto.nombre} | Stock: ${producto.stock} | ID: ${producto.id}")
 
+    // 👇 COMPROBACIÓN RECOBRADA: Miramos si hay perfil; si es null, es invitado 👇
+    val usuario by viewModel.usuarioPerfil.collectAsState()
+    val esInvitado = (usuario == null)
+
     val fondoOscuro = Brush.verticalGradient(
         colors = listOf(Color(0xFF071A27), Color(0xFF120338))
     )
 
     Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Detalles", color = Color.White) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFF071A27)
-                )
-            )
-        },
-        bottomBar = { AppFooter(navController) }
+        topBar = { AppHeader(title = "Vinyl Sounds") },
+        // 👇 CORREGIDO: Pasamos la bandera al footer para que oculte el carrito y los pedidos 👇
+        bottomBar = { AppFooter(navController = navController, isInvitado = esInvitado) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -146,26 +138,52 @@ fun DetailScreen(
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            // Botón de Compra / Stock
-            Button(
-                onClick = {
-                    Log.d("DEBUG_CLICK", "¡Botón pulsado!")
-                    viewModel.agregarAlCarrito(producto.id ?: "")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB13CFF)),
-                shape = RoundedCornerShape(16.dp),
-                enabled = true
-            ) {
-                Icon(Icons.Default.ShoppingCart, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (producto.stock > 0) "Añadir al carrito" else "Sin Stock",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+            // ==========================================================
+            // 👇 CONTROL DE ACCIONES: BOTÓN DE COMPRA ADAPTADO A INVITADO 👇
+            // ==========================================================
+            if (esInvitado) {
+                // Si es invitado, le mostramos un botón que le redirige al login de forma segura
+                Button(
+                    onClick = {
+                        navController.navigate("inicio") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3E2A5E)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(
+                        text = "Inicia sesión para comprar",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            } else {
+                // Si es un usuario registrado normal, conserva tu lógica de stock original
+                Button(
+                    onClick = {
+                        Log.d("DEBUG_CLICK", "¡Botón pulsado!")
+                        viewModel.agregarAlCarrito(producto.id ?: "")
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB13CFF)),
+                    shape = RoundedCornerShape(16.dp),
+                    enabled = producto.stock > 0
+                ) {
+                    Icon(Icons.Default.ShoppingCart, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (producto.stock > 0) "Añadir al carrito" else "Sin Stock",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Text(

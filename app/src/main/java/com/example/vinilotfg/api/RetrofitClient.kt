@@ -9,7 +9,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    private const val BASE_URL = "http://10.0.2.2:8081/"
+    private const val BASE_URL = "https://vinylsounds.onrender.com/"
     private var cookieJar: PersistentCookieJar? = null
 
     // Debes llamar a este init desde tu MainActivity al iniciar

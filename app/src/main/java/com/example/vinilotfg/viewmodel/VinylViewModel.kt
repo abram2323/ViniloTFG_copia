@@ -107,17 +107,21 @@ class VinylViewModel : ViewModel() {
     fun cerrarSesion(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
-                // 1. Avisar al servidor
+                // 1. Avisar al servidor de la desconexión
                 val response = RetrofitClient.authApi.logout()
 
-                // 2. Limpiar cookies usando el nuevo método (sin pasar null)
+                // 2. Limpiar las cookies de sesión del cliente HTTP
                 RetrofitClient.limpiarCookies()
 
-                // 3. Resetear el estado (Ahora funcionará porque pusimos el ? en el StateFlow)
+                // 3. ⚠️ ¡LA CLAVE! Vaciamos absolutamente todos los estados locales de la memoria ⚠️
                 _usuarioPerfil.value = null
+                _carritoItems.value = emptyList()
+                _pedidos.value = emptyList()
+                _direcciones.value = emptyList()
 
                 onResult(response.isSuccessful)
             } catch (e: Exception) {
+                android.util.Log.e("DEBUG_LOGOUT", "Error al cerrar sesión: ${e.message}")
                 onResult(false)
             }
         }

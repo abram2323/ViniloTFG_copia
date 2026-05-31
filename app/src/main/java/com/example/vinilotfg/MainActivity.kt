@@ -48,6 +48,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             ViniloTFGTheme {
                 val navController = rememberNavController()
+                // 📦 Esta es tu única y verdadera fuente de verdad (instancia global del ViewModel)
                 val vinylViewModel: VinylViewModel = viewModel()
 
                 NavHost(navController = navController, startDestination = "inicio") {
@@ -55,8 +56,9 @@ class MainActivity : ComponentActivity() {
                         InicioScreen(navController, vinylViewModel)
                     }
 
-                    composable("register") {
-                        Registro(navController)
+                    // CORREGIDO: Ahora recibe el vinylViewModel global que comparte cookies y estados
+                    composable("registro") {
+                        Registro(navController = navController, viewModel = vinylViewModel)
                     }
 
                     composable("mis_pedidos") {
@@ -111,9 +113,19 @@ fun InicioScreen(navController: NavController, vinylViewModel: VinylViewModel) {
     val scope = rememberCoroutineScope()
     var passwordVisible by remember { mutableStateOf(false) }
 
-    val fondo = Brush.linearGradient(
-        colors = listOf(Color(0xFF4B1173), Color(0xFF1A002D)),
-        start = Offset.Zero, end = Offset(0f, Float.POSITIVE_INFINITY)
+    val fondoDegradado = Brush.linearGradient(
+        colors = listOf(Color(0xFF08050F), Color(0xFF0C0918), Color(0xFF12103A)),
+        start = Offset(0f, 0f),
+        end = Offset(0f, 2000f)
+    )
+
+    val degradadoLogo = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFFF0EBFF), // grad_logo_1 (Blanco/Púrpura suave)
+            Color(0xFF7B2FFF), // grad_logo_2 (Morado)
+            Color(0xFFFF006E), // grad_logo_3 (Rosa eléctrico)
+            Color(0xFFFF6B00)  // grad_logo_4 (Naranja)
+        )
     )
 
     val botonGradiente = Brush.horizontalGradient(
@@ -123,7 +135,7 @@ fun InicioScreen(navController: NavController, vinylViewModel: VinylViewModel) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(fondo),
+            .background(fondoDegradado),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -133,7 +145,15 @@ fun InicioScreen(navController: NavController, vinylViewModel: VinylViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(48.dp))
-            Text("🎵 Vinyl Sounds", fontSize = 30.sp, fontWeight = FontWeight.Bold, style = LogoTextStyle)
+            Text(
+                text = "Vinyl Sounds",
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                //  COMBINAMOS TU ESTILO CON EL DEGRADADO USANDO BRUSH
+                style = LogoTextStyle.copy(
+                    brush = degradadoLogo
+                )
+            )
             Text("Tu música, tu estilo", fontSize = 14.sp, color = Color(0xFFC9B4E3))
             Spacer(modifier = Modifier.height(36.dp))
 
@@ -212,7 +232,7 @@ fun InicioScreen(navController: NavController, vinylViewModel: VinylViewModel) {
                             scope.launch {
                                 vinylViewModel.realizarLogin(email, password) { exito, error ->
                                     if (exito) {
-                                        navController.navigate("store/false") {
+                                        navController.navigate("store/$email") {
                                             popUpTo("inicio") { inclusive = true }
                                         }
                                     } else {
@@ -232,7 +252,7 @@ fun InicioScreen(navController: NavController, vinylViewModel: VinylViewModel) {
                     "¿No tienes cuenta? Regístrate",
                     fontSize = 13.sp,
                     color = Color(0xFFBFA7D8),
-                    modifier = Modifier.clickable { navController.navigate("register") }
+                    modifier = Modifier.clickable { navController.navigate("registro") }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))

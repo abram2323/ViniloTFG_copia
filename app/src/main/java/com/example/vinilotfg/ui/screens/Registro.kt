@@ -3,6 +3,9 @@ package com.example.vinilotfg.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,17 +15,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.vinilotfg.api.RetrofitClient
 import com.example.vinilotfg.model.RegistroRequest
+import com.example.vinilotfg.ui.theme.LogoTextStyle
+import com.example.vinilotfg.viewmodel.VinylViewModel // Asegúrate de que esta ruta sea la de tu proyecto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun Registro(navController: NavController) {
+fun Registro(navController: NavController, viewModel: VinylViewModel) { // 👈 Recibe el viewModel aquí
     // Estados
     var nombre by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
@@ -30,14 +36,27 @@ fun Registro(navController: NavController) {
     var password by remember { mutableStateOf("") }
     var repeatPassword by remember { mutableStateOf("") }
 
+    // Estados para controlar la visibilidad de los ojitos (independientes)
+    var passwordVisible by remember { mutableStateOf(false) }
+    var repeatPasswordVisible by remember { mutableStateOf(false) }
+
     val coroutineScope = rememberCoroutineScope()
     var errorMessage by remember { mutableStateOf("") }
 
     // Diseños
-    val fondo = Brush.linearGradient(
-        colors = listOf(Color(0xFF4B1173), Color(0xFF1A002D)),
-        start = Offset.Zero,
-        end = Offset(0f, Float.POSITIVE_INFINITY)
+    val fondoDegradado = Brush.linearGradient(
+        colors = listOf(Color(0xFF08050F), Color(0xFF0C0918), Color(0xFF12103A)),
+        start = Offset(0f, 0f),
+        end = Offset(0f, 2000f)
+    )
+
+    val degradadoLogo = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFFF0EBFF),
+            Color(0xFF7B2FFF),
+            Color(0xFFFF006E),
+            Color(0xFFFF6B00)
+        )
     )
 
     val botonGradiente = Brush.horizontalGradient(
@@ -47,7 +66,7 @@ fun Registro(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(fondo),
+            .background(fondoDegradado),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -58,7 +77,14 @@ fun Registro(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(48.dp))
 
-            Text("🎵 Vinyl Sounds", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(
+                text = "Vinyl Sounds",
+                fontSize = 30.sp,
+                fontWeight = FontWeight.Bold,
+                style = LogoTextStyle.copy(
+                    brush = degradadoLogo
+                )
+            )
             Text("Crea tu cuenta", fontSize = 14.sp, color = Color(0xFFC9B4E3))
 
             Spacer(modifier = Modifier.height(36.dp))
@@ -110,7 +136,14 @@ fun Registro(navController: NavController) {
                     value = password,
                     onValueChange = { password = it },
                     placeholder = { Text("Contraseña") },
-                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(imageVector = image, contentDescription = if (passwordVisible) "Ocultar" else "Ver")
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = registroTextFieldColors()
                 )
@@ -121,7 +154,14 @@ fun Registro(navController: NavController) {
                     value = repeatPassword,
                     onValueChange = { repeatPassword = it },
                     placeholder = { Text("Repite la contraseña") },
-                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                    visualTransformation = if (repeatPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (repeatPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                        IconButton(onClick = { repeatPasswordVisible = !repeatPasswordVisible }) {
+                            Icon(imageVector = image, contentDescription = if (repeatPasswordVisible) "Ocultar" else "Ver")
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = registroTextFieldColors()
                 )
@@ -154,13 +194,31 @@ fun Registro(navController: NavController) {
                                             apellidos = apellido
                                         )
 
+                                        // 1. Mandamos el registro a Supabase
                                         val response = RetrofitClient.authApi.registrarUsuario(request)
 
                                         withContext(Dispatchers.Main) {
                                             if (response.isSuccessful) {
-                                                navController.navigate("store/$email") {
-                                                    popUpTo("inicio") { inclusive = true }
+
+                                                // 2. 🚀 LOGIN AUTOMÁTICO TRAS REGISTRO EXITOSO 🚀
+                                                viewModel.realizarLogin(email, password) { loginExitoso, errorMsg ->
+                                                    if (loginExitoso) {
+                                                        // 3. Ya con la cookie activa, cargamos el Perfil en memoria
+                                                        viewModel.obtenerPerfil()
+
+                                                        // 4. Saltamos a la Store con los datos listos
+                                                        navController.navigate("store/$email") {
+                                                            popUpTo("inicio") { inclusive = true }
+                                                        }
+                                                    } else {
+                                                        // Fallback por seguridad: si falla el login automático manda a login
+                                                        errorMessage = "Cuenta creada. Por favor, inicia sesión."
+                                                        navController.navigate("login") {
+                                                            popUpTo("inicio") { inclusive = true }
+                                                        }
+                                                    }
                                                 }
+
                                             } else {
                                                 val errorBody = response.errorBody()?.string()
                                                 errorMessage = "Error ${response.code()}: ${errorBody ?: "No se pudo registrar"}"
